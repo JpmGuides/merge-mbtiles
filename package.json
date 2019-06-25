@@ -1,0 +1,25 @@
+{
+  "name": "merge-mbtiles",
+  "version": "1.0.0",
+  "description": "Tool to merge JPM mbtiles files",
+  "main": "dist/merge-mbtiles.js",
+  "types": "dist/merge-mbtiles.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Julien Pilet",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@mapbox/mbtiles": "^0.11.0",
+    "@mapbox/tilelive": "^6.0.0",
+    "minimist": "^1.2.0",
+    "sqlite3": "^4.0.9"
+  },
+  "devDependencies": {
+    "@types/minimist": "^1.2.0",
+    "@types/node": "^12.0.10",
+    "@types/sqlite3": "^3.1.5",
+    "typescript": "^3.5.2"
+  }
+}

@@ -6,7 +6,7 @@
   "types": "dist/merge-mbtiles.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc && node dist/index -o /tmp/out.mbtiles $(pwd)/test_data/*"
   },
   "author": "Julien Pilet",
   "license": "UNLICENSED",

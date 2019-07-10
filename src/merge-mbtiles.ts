@@ -41,7 +41,7 @@ async function copyMaps(input: string[], output: string): Promise<void> {
   const destDb = new Database(output, OPEN_READWRITE);
   const runDest: (...args: string[]) => Promise<void> = promisify(destDb.run.bind(destDb));
 
-  await runDest('CREATE TABLE IF NOT EXISTS jpm_map (id, json)');
+  await runDest('CREATE TABLE IF NOT EXISTS jpm_map (id NOT NULL UNIQUE, json)');
 
   for (let file of input) {
     const sourceDb = new Database(file, OPEN_READWRITE);
@@ -56,7 +56,7 @@ async function copyMaps(input: string[], output: string): Promise<void> {
 
           try {
             console.log('Adding map for article: ' + row.id);
-            await runDest('INSERT INTO jpm_map(id, json) VALUES (?, ?)',
+            await runDest('INSERT OR REPLACE INTO jpm_map(id, json) VALUES (?, ?)',
                       row.id, row.json);
           } catch (err) {
             console.warn('Failed to insert map into ' + output + ': ', err);

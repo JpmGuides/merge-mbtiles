@@ -90,7 +90,7 @@ function copyMaps(input, output) {
                 case 0:
                     destDb = new sqlite3_1.Database(output, sqlite3_1.OPEN_READWRITE);
                     runDest = util_1.promisify(destDb.run.bind(destDb));
-                    return [4 /*yield*/, runDest('CREATE TABLE IF NOT EXISTS jpm_map (id, json)')];
+                    return [4 /*yield*/, runDest('CREATE TABLE IF NOT EXISTS jpm_map (id NOT NULL UNIQUE, json)')];
                 case 1:
                     _a.sent();
                     _loop_1 = function (file) {
@@ -113,7 +113,7 @@ function copyMaps(input, output) {
                                                             case 1:
                                                                 _a.trys.push([1, 3, , 4]);
                                                                 console.log('Adding map for article: ' + row.id);
-                                                                return [4 /*yield*/, runDest('INSERT INTO jpm_map(id, json) VALUES (?, ?)', row.id, row.json)];
+                                                                return [4 /*yield*/, runDest('INSERT OR REPLACE INTO jpm_map(id, json) VALUES (?, ?)', row.id, row.json)];
                                                             case 2:
                                                                 _a.sent();
                                                                 return [3 /*break*/, 4];

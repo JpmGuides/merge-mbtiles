@@ -39,6 +39,12 @@ var util_1 = require("util");
 var tilelive = require("@mapbox/tilelive");
 var mbtiles_1 = require("@mapbox/mbtiles");
 var sqlite3_1 = require("sqlite3");
+var archiver = require("archiver");
+var unzipper = require("unzipper");
+var os = require("os");
+var path = require("path");
+var fs = require("fs");
+var stream = require("stream");
 mbtiles_1.registerProtocols(tilelive);
 function load(uri) {
     return new Promise(function (resolve, reject) {
@@ -211,4 +217,130 @@ function mergeMbtiles(input, output) {
         });
     });
 }
-exports.mergeMbtiles = mergeMbtiles;
+function mktmpdir() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            return [2 /*return*/, new Promise(function (resolve, reject) {
+                    fs.mkdtemp(path.join(os.tmpdir(), 'mergezip-'), function (err, folder) {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve(folder);
+                        }
+                    });
+                })];
+        });
+    });
+}
+function randomString() {
+    return Math.random().toString(36).substring(2);
+}
+function unzipFile(compressedFile, destFolder) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result;
+        return __generator(this, function (_a) {
+            result = [];
+            return [2 /*return*/, new Promise(function (resolve, reject) {
+                    fs.createReadStream(compressedFile)
+                        .pipe(unzipper.Parse())
+                        .pipe(new stream.Transform({
+                        objectMode: true,
+                        transform: function (entry, e, cb) {
+                            var fileName = entry.path;
+                            var type = entry.type; // 'Directory' or 'File'
+                            var size = entry.vars.uncompressedSize; // There is also compressedSize;
+                            if (fileName === "map.mbtiles" || fileName == 'hillshading.mbtiles') {
+                                var dest = destFolder + '/' + randomString() + '-' + fileName;
+                                result.push(dest);
+                                entry.pipe(fs.createWriteStream(dest))
+                                    .on('finish', cb)
+                                    .on('error', reject);
+                            }
+                            else {
+                                entry.autodrain();
+                                cb();
+                            }
+                        }
+                    }))
+                        .on('finish', function () { resolve(result); })
+                        .on('error', reject);
+                })];
+        });
+    });
+}
+function mergeZips(input, outputfilename) {
+    return __awaiter(this, void 0, void 0, function () {
+        var inputVecTiles, inputHillshading, folder, _i, input_3, file, decompressed, _a, decompressed_1, d, vt_file, hs_file;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    inputVecTiles = [];
+                    inputHillshading = [];
+                    return [4 /*yield*/, mktmpdir()];
+                case 1:
+                    folder = _b.sent();
+                    _i = 0, input_3 = input;
+                    _b.label = 2;
+                case 2:
+                    if (!(_i < input_3.length)) return [3 /*break*/, 5];
+                    file = input_3[_i];
+                    return [4 /*yield*/, unzipFile(file, folder)];
+                case 3:
+                    decompressed = _b.sent();
+                    for (_a = 0, decompressed_1 = decompressed; _a < decompressed_1.length; _a++) {
+                        d = decompressed_1[_a];
+                        if (d.match(/map.mbtiles$/)) {
+                            inputVecTiles.push(d);
+                        }
+                        else if (d.match(/hillshading.mbtiles/)) {
+                            inputHillshading.push(d);
+                        }
+                        else {
+                            throw new Error('Unknown file: ' + d);
+                        }
+                    }
+                    _b.label = 4;
+                case 4:
+                    _i++;
+                    return [3 /*break*/, 2];
+                case 5:
+                    vt_file = folder + '/map.mbtiles';
+                    hs_file = folder + '/hillshading.mbtiles';
+                    return [4 /*yield*/, Promise.all([
+                            mergeMbtiles(inputVecTiles, vt_file),
+                            mergeMbtiles(inputHillshading, hs_file)
+                        ])];
+                case 6:
+                    _b.sent();
+                    return [2 /*return*/, new Promise(function (resolve, reject) {
+                            var output = fs.createWriteStream(outputfilename);
+                            var archive = archiver('zip', {
+                                zlib: { level: 5 } // Sets the compression level.
+                            });
+                            output.on('close', resolve);
+                            archive.on('warning', function (err) { console.warn(err); });
+                            archive.on('error', function (err) { console.warn(err); reject(err); });
+                            archive.pipe(output);
+                            archive.file(hs_file, { name: "hillshading.mbtiles" });
+                            archive.file(vt_file, { name: "map.mbtiles" });
+                            archive.finalize();
+                        })];
+            }
+        });
+    });
+}
+function mergeMaps(input, output) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            if (output.match(/zip$/)) {
+                return [2 /*return*/, mergeZips(input, output)];
+            }
+            else {
+                return [2 /*return*/, mergeMbtiles(input, output)];
+            }
+            return [2 /*return*/];
+        });
+    });
+}
+exports.mergeMaps = mergeMaps;

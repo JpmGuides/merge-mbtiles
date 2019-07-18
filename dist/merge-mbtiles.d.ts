@@ -1,1 +1,1 @@
-export declare function mergeMbtiles(input: string[], output: string): Promise<void>;
+export declare function mergeMaps(input: string[], output: string): Promise<void>;

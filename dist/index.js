@@ -49,7 +49,7 @@ if (!argv.o || argv._.length == 0) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, merge_mbtiles_1.mergeMbtiles(argv._, argv.o)];
+                return [4 /*yield*/, merge_mbtiles_1.mergeMaps(argv._, argv.o)];
             case 1:
                 _a.sent();
                 console.log(argv.o + ': done.');

@@ -1,5 +1,5 @@
 import * as minimist from 'minimist';
-import { mergeMbtiles } from './merge-mbtiles';
+import { mergeMaps } from './merge-mbtiles';
 
 const argv = minimist(process.argv.slice(2));
 
@@ -10,7 +10,7 @@ if (!argv.o || argv._.length == 0) {
 
 (async () => {
   try {
-    await mergeMbtiles(argv._, argv.o);
+    await mergeMaps(argv._, argv.o);
     console.log(argv.o + ': done.');
     process.exit(0);
   } catch (err) {

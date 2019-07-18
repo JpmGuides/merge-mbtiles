@@ -175,7 +175,7 @@ async function mergeZips(input: string[], outputfilename: string): Promise<void>
     mergeMbtiles(inputVecTiles, vt_file),
     mergeMbtiles(inputHillshading, hs_file)]);
 
-  return new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outputfilename);
 
     const archive = archiver('zip', {
@@ -190,6 +190,14 @@ async function mergeZips(input: string[], outputfilename: string): Promise<void>
     archive.file(vt_file, {name: "map.mbtiles"});
     archive.finalize();
   });
+
+  // cleanup
+  const deleteFile = promisify(fs.unlink);
+  await Promise.all(
+    [ hs_file, vt_file ].concat(inputVecTiles, inputHillshading)
+    .map((f) => deleteFile(f))
+  );
+  fs.rmdir(folder, () => {});
 }
 
 export async function mergeMaps(input: string[], output: string): Promise<void> {

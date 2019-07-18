@@ -271,7 +271,7 @@ function unzipFile(compressedFile, destFolder) {
 }
 function mergeZips(input, outputfilename) {
     return __awaiter(this, void 0, void 0, function () {
-        var inputVecTiles, inputHillshading, folder, _i, input_3, file, decompressed, _a, decompressed_1, d, vt_file, hs_file;
+        var inputVecTiles, inputHillshading, folder, _i, input_3, file, decompressed, _a, decompressed_1, d, vt_file, hs_file, deleteFile;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -313,7 +313,7 @@ function mergeZips(input, outputfilename) {
                         ])];
                 case 6:
                     _b.sent();
-                    return [2 /*return*/, new Promise(function (resolve, reject) {
+                    return [4 /*yield*/, new Promise(function (resolve, reject) {
                             var output = fs.createWriteStream(outputfilename);
                             var archive = archiver('zip', {
                                 zlib: { level: 5 } // Sets the compression level.
@@ -326,6 +326,15 @@ function mergeZips(input, outputfilename) {
                             archive.file(vt_file, { name: "map.mbtiles" });
                             archive.finalize();
                         })];
+                case 7:
+                    _b.sent();
+                    deleteFile = util_1.promisify(fs.unlink);
+                    return [4 /*yield*/, Promise.all([hs_file, vt_file].concat(inputVecTiles, inputHillshading)
+                            .map(function (f) { return deleteFile(f); }))];
+                case 8:
+                    _b.sent();
+                    fs.rmdir(folder, function () { });
+                    return [2 /*return*/];
             }
         });
     });

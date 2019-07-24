@@ -113,7 +113,7 @@ function copyMaps(input, output) {
                                                         switch (_a.label) {
                                                             case 0:
                                                                 if (err) {
-                                                                    return [2 /*return*/, console.warn("Can't read map from " + input + ': ', err)];
+                                                                    return [2 /*return*/];
                                                                 }
                                                                 _a.label = 1;
                                                             case 1:
@@ -132,9 +132,7 @@ function copyMaps(input, output) {
                                                     });
                                                 });
                                             }, function (err, numrows) {
-                                                if (err) {
-                                                    console.warn("Can't read map from " + input + ': ', err);
-                                                }
+                                                // an error is OK: there might be no maps or no jpm_map table.
                                                 resolve();
                                             });
                                         })];

@@ -57,7 +57,7 @@ async function copyMaps(input: string[], output: string): Promise<void> {
         "SELECT id, json from jpm_map",
         async function(err: Error, row: {id: string, json: string}) {
           if (err) {
-            return console.warn("Can't read map from " + input + ': ', err);
+            return;
           }
 
           try {
@@ -69,9 +69,7 @@ async function copyMaps(input: string[], output: string): Promise<void> {
           }
         },
         function(err: Error, numrows: number) {
-          if (err) {
-            console.warn("Can't read map from " + input + ': ', err);
-          }
+          // an error is OK: there might be no maps or no jpm_map table.
           resolve();
         });
     });

@@ -12,6 +12,15 @@ import * as stream from 'stream';
 
 registerProtocols(tilelive);
 
+const sources: { [key: string]: string } = {
+  'openmaptiles': 'map.mbtiles',
+  'map': 'map.mbtiles',
+  'hillshading': 'hillshading.mbtiles',
+  'contours': 'contours.mbtiles',
+  'terrain-rgb': 'terrain-rgb.mbtiles',
+  'landcover': 'landcover.mbtiles'
+};
+
 function load<T>(uri: string) : Promise<T> {
   return new Promise((resolve, reject) => {
     tilelive.load(uri, (err: Error | string, result: T) => {
@@ -130,7 +139,7 @@ async function unzipFile(compressedFile: string, destFolder: string): Promise<st
           const fileName = entry.path;
           const type = entry.type; // 'Directory' or 'File'
           const size = entry.vars.uncompressedSize; // There is also compressedSize;
-          if (fileName === "map.mbtiles" || fileName == 'hillshading.mbtiles') {
+          if (fileName.replace('.mbtiles', '') in sources) {
             const dest = destFolder + '/' + randomString() + '-' + fileName;
             result.push(dest);
             entry.pipe(fs.createWriteStream(dest))
@@ -148,8 +157,7 @@ async function unzipFile(compressedFile: string, destFolder: string): Promise<st
 }
 
 async function mergeZips(input: string[], outputfilename: string): Promise<void> {
-  const inputVecTiles: string[] = [];
-  const inputHillshading: string[] = [];
+  const inputBySource: { [source: string]: string[] } = { };
 
   const folder: string = await mktmpdir();
 
@@ -157,21 +165,20 @@ async function mergeZips(input: string[], outputfilename: string): Promise<void>
   for (let file of input) {
     const decompressed = await unzipFile(file, folder);
     for (let d of decompressed) {
-      if (d.match(/map.mbtiles$/)) {
-        inputVecTiles.push(d);
-      } else if (d.match(/hillshading.mbtiles/)) {
-        inputHillshading.push(d);
+      const re = new RegExp('(' + Object.keys(sources).map((x) => `(${x})`).join('|') + ').mbtiles')
+      const m = d.match(re);
+      if (m && m[1] in sources) {
+        inputBySource[m[1]] = (inputBySource[m[1]] || []).concat([d]);
       } else {
         throw new Error('Unknown file: ' + d);
       }
     }
   }
 
-  const vt_file = folder + '/map.mbtiles';
-  const hs_file = folder + '/hillshading.mbtiles';
-  await Promise.all([
-    mergeMbtiles(inputVecTiles, vt_file),
-    mergeMbtiles(inputHillshading, hs_file)]);
+  const file = (source: string) => { return `${folder}/${source}.mbtiles`; };
+
+  await Promise.all(
+    Object.keys(inputBySource).map((source) => mergeMbtiles(inputBySource[source], file(source))));
 
   await new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outputfilename);
@@ -184,17 +191,20 @@ async function mergeZips(input: string[], outputfilename: string): Promise<void>
     archive.on('warning', (err) => { console.warn(err); });
     archive.on('error', (err) => { console.warn(err); reject(err); });
     archive.pipe(output);
-    archive.file(hs_file, {name: "hillshading.mbtiles"});
-    archive.file(vt_file, {name: "map.mbtiles"});
+    for (let source of Object.keys(inputBySource)) {
+      archive.file(file(source), {name: sources[source]});
+    }
     archive.finalize();
   });
 
   // cleanup
   const deleteFile = promisify(fs.unlink);
-  await Promise.all(
-    [ hs_file, vt_file ].concat(inputVecTiles, inputHillshading)
-    .map((f) => deleteFile(f))
-  );
+
+  // delete merge temporary files (now zipped)
+  await Promise.all(Object.keys(inputBySource).map(file).map((fn) => deleteFile(fn)));
+  for (let s of Object.keys(inputBySource)) {
+    await Promise.all(inputBySource[s].map((fn) => deleteFile(fn)));
+  }
   fs.rmdir(folder, () => {});
 }
 

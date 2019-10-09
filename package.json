@@ -1,6 +1,6 @@
 {
   "name": "merge-mbtiles",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Tool to merge JPM mbtiles files",
   "main": "dist/merge-mbtiles.js",
   "types": "dist/merge-mbtiles.d.ts",

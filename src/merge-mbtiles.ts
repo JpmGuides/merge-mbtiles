@@ -79,7 +79,7 @@ async function copyMaps(input: string[], output: string): Promise<void> {
         },
         function(err: Error, numrows: number) {
           // an error is OK: there might be no maps or no jpm_map table.
-          resolve();
+          resolve(null);
         });
     });
     await (promisify(sourceDb.close.bind(sourceDb)))();

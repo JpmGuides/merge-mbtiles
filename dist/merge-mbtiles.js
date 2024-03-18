@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -13,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -35,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.mergeMaps = void 0;
 var util_1 = require("util");
 var tilelive = require("@mapbox/tilelive");
 var mbtiles_1 = require("@mapbox/mbtiles");
@@ -45,7 +47,7 @@ var os = require("os");
 var path = require("path");
 var fs = require("fs");
 var stream = require("stream");
-mbtiles_1.registerProtocols(tilelive);
+(0, mbtiles_1.registerProtocols)(tilelive);
 var sources = {
     'openmaptiles': 'map.mbtiles',
     'map': 'map.mbtiles',
@@ -103,14 +105,14 @@ function copyMaps(input, output) {
             switch (_a.label) {
                 case 0:
                     destDb = new sqlite3_1.Database(output, sqlite3_1.OPEN_READWRITE);
-                    runDest = util_1.promisify(destDb.run.bind(destDb));
+                    runDest = (0, util_1.promisify)(destDb.run.bind(destDb));
                     return [4 /*yield*/, runDest('CREATE TABLE IF NOT EXISTS jpm_map (id NOT NULL UNIQUE, json)')];
                 case 1:
                     _a.sent();
                     _loop_1 = function (file) {
                         var sourceDb;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
                                 case 0:
                                     sourceDb = new sqlite3_1.Database(file, sqlite3_1.OPEN_READWRITE);
                                     return [4 /*yield*/, new Promise(function (resolve, reject) {
@@ -141,14 +143,14 @@ function copyMaps(input, output) {
                                                 });
                                             }, function (err, numrows) {
                                                 // an error is OK: there might be no maps or no jpm_map table.
-                                                resolve();
+                                                resolve(null);
                                             });
                                         })];
                                 case 1:
-                                    _a.sent();
-                                    return [4 /*yield*/, (util_1.promisify(sourceDb.close.bind(sourceDb)))()];
+                                    _b.sent();
+                                    return [4 /*yield*/, ((0, util_1.promisify)(sourceDb.close.bind(sourceDb)))()];
                                 case 2:
-                                    _a.sent();
+                                    _b.sent();
                                     return [2 /*return*/];
                             }
                         });
@@ -170,7 +172,7 @@ function copyMaps(input, output) {
                     return [4 /*yield*/, runDest('VACUUM')];
                 case 6:
                     _a.sent();
-                    return [4 /*yield*/, (util_1.promisify(destDb.close.bind(destDb)))()];
+                    return [4 /*yield*/, ((0, util_1.promisify)(destDb.close.bind(destDb)))()];
                 case 7:
                     _a.sent();
                     return [2 /*return*/];
@@ -295,7 +297,7 @@ function mergeZips(input, outputfilename) {
                     decompressed = _d.sent();
                     for (_a = 0, decompressed_1 = decompressed; _a < decompressed_1.length; _a++) {
                         d = decompressed_1[_a];
-                        re = new RegExp('(' + Object.keys(sources).map(function (x) { return "(" + x + ")"; }).join('|') + ').mbtiles');
+                        re = new RegExp('(' + Object.keys(sources).map(function (x) { return "(".concat(x, ")"); }).join('|') + ').mbtiles');
                         m = d.match(re);
                         if (m && m[1] in sources) {
                             inputBySource[m[1]] = (inputBySource[m[1]] || []).concat([d]);
@@ -309,7 +311,7 @@ function mergeZips(input, outputfilename) {
                     _i++;
                     return [3 /*break*/, 2];
                 case 5:
-                    file = function (source) { return folder + "/" + source + ".mbtiles"; };
+                    file = function (source) { return "".concat(folder, "/").concat(source, ".mbtiles"); };
                     return [4 /*yield*/, Promise.all(Object.keys(inputBySource).map(function (source) { return mergeMbtiles(inputBySource[source], file(source)); }))];
                 case 6:
                     _d.sent();
@@ -330,7 +332,7 @@ function mergeZips(input, outputfilename) {
                         })];
                 case 7:
                     _d.sent();
-                    deleteFile = util_1.promisify(fs.unlink);
+                    deleteFile = (0, util_1.promisify)(fs.unlink);
                     // delete merge temporary files (now zipped)
                     return [4 /*yield*/, Promise.all(Object.keys(inputBySource).map(file).map(function (fn) { return deleteFile(fn); }))];
                 case 8:
